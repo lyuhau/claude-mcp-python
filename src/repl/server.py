@@ -18,19 +18,15 @@ REPL_SOURCE_PATH = __file__  # Make path available globally
 class ReplServer(Server):
     def __init__(self):
         super().__init__("repl")
-        self.interpreter_manager = None  # Will be initialized when server starts
+        self.interpreter_manager = interpreter.InterpreterManager.get_instance()
 
     async def initialize(self, options: InitializationOptions):
-        # Initialize interpreter manager when server starts
-        self.interpreter_manager = interpreter.InterpreterManager.get_instance()  # Use singleton pattern
         await self.interpreter_manager.start()
         return await super().initialize(options)
 
     async def shutdown(self):
-        # Clean up interpreter manager when server shuts down
-        if self.interpreter_manager:
-            await self.interpreter_manager.stop()
-            interpreter.InterpreterManager.reset_instance()  # Reset singleton on shutdown
+        await self.interpreter_manager.stop()
+        interpreter.InterpreterManager.reset_instance()
         return await super().shutdown()
 
 
@@ -165,11 +161,11 @@ async def handle_call_tool(
             text="\n".join(response) if response else "No output"
         )]
     elif name == "python_session":
-        if not server.interpreter_manager:
-            raise RuntimeError("Interpreter manager not initialized")
+        code = arguments.get("code")
+        if not code:
+            raise ValueError("Missing code parameter")
 
         session_id = arguments.get("session_id")
-        code = arguments.get("code")
 
         if not session_id:
             # Create new session

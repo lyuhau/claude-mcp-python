@@ -10,13 +10,6 @@ from typing import Dict, Optional
 class AsyncInterpreter:
     """Async wrapper around code.InteractiveInterpreter"""
 
-    @classmethod
-    def reset_instance(cls):
-        """Reset the singleton instance"""
-        if cls._instance:
-            asyncio.create_task(cls._instance.stop())
-            cls._instance = None
-    
     def __init__(self, session_id: str):
         self.session_id = session_id
         self.interpreter = code.InteractiveInterpreter()
@@ -37,13 +30,23 @@ class AsyncInterpreter:
         sys.stderr = self.stderr
 
         try:
-            # Try to eval first (for expressions)
+            # Try to compile the code first
             try:
-                result = self.interpreter.runsource(code, "<input>", "single")
-                if result is True:  # Incomplete input
+                compiled_code = code.compile("<input>", "exec")
+                if compiled_code is None:
                     self.stderr.write("Incomplete input\n")
+                else:
+                    exec(compiled_code, self.locals)
             except Exception as e:
                 self.stderr.write(f"Error: {str(e)}\n")
+                # Try running as separate statements
+                for statement in code.split('\n'):
+                    statement = statement.strip()
+                    if statement and not statement.startswith('#'):
+                        try:
+                            self.interpreter.runsource(statement, "<input>", "single")
+                        except Exception as e:
+                            self.stderr.write(f"Error in statement '{statement}': {str(e)}\n")
         finally:
             # Restore stdout/stderr
             sys.stdout = old_stdout
@@ -61,7 +64,9 @@ class AsyncInterpreter:
 
 
 class InterpreterManager:
-    _instance = None
+    """Manages multiple interpreter sessions"""
+    
+    _instance: Optional['InterpreterManager'] = None  # Define _instance class variable
     
     @classmethod
     def get_instance(cls, timeout_seconds: int = 300) -> 'InterpreterManager':
@@ -70,8 +75,6 @@ class InterpreterManager:
             cls._instance = cls(timeout_seconds)
         return cls._instance
     
-    """Manages multiple interpreter sessions"""
-
     @classmethod
     def reset_instance(cls):
         """Reset the singleton instance"""
@@ -83,10 +86,13 @@ class InterpreterManager:
         self.interpreters: Dict[str, AsyncInterpreter] = {}
         self.timeout_seconds = timeout_seconds
         self.cleanup_task: Optional[asyncio.Task] = None
+        self._initialized = False
 
     async def start(self):
         """Start the cleanup task"""
-        self.cleanup_task = asyncio.create_task(self._cleanup_loop())
+        if not self._initialized:
+            self.cleanup_task = asyncio.create_task(self._cleanup_loop())
+            self._initialized = True
 
     async def stop(self):
         """Stop the cleanup task"""
@@ -96,6 +102,7 @@ class InterpreterManager:
                 await self.cleanup_task
             except asyncio.CancelledError:
                 pass
+            self._initialized = False
 
     async def _cleanup_loop(self):
         """Periodically clean up inactive sessions"""
