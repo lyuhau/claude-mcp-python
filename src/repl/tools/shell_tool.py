@@ -1,4 +1,6 @@
 import asyncio
+import os
+import pathlib
 import time
 from typing import List
 
@@ -41,15 +43,20 @@ REMEMBER: Be cautious when executing shell commands, as they can have side effec
         return {
             "type": "object",
             "properties": {
-                "command": {
-                    "type": "string",
-                    "description": "Shell command to execute"
-                },
                 "shell": {
                     "type": "string",
                     "description": "Shell to use (bash/sh/zsh)",
                     "default": "bash",
                     "enum": ["bash", "sh", "zsh"]
+                },
+                "working_dir": {
+                    "type": "string",
+                    "description": "Working directory to execute the command in (defaults to user home)",
+                    "default": ""
+                },
+                "command": {
+                    "type": "string",
+                    "description": "Shell command to execute"
                 }
             },
             "required": ["command"]
@@ -61,22 +68,32 @@ REMEMBER: Be cautious when executing shell commands, as they can have side effec
             raise ValueError("Missing command parameter")
 
         shell = arguments.get("shell", "bash")
-        output = await self._execute_command(command, shell)
+        working_dir = arguments.get("working_dir")
+
+        if not working_dir:
+            working_dir = pathlib.Path.home()
+
+        # Verify working directory exists
+        if working_dir and not os.path.exists(working_dir):
+            raise ValueError(f"Working directory does not exist: {working_dir}")
+
+        output = await self._execute_command(command, shell, working_dir)
         return output.format_output()
 
-    async def _execute_command(self, command: str, shell: str = "bash") -> CodeOutput:
+    async def _execute_command(self, command: str, shell: str = "bash", working_dir: str = None) -> CodeOutput:
         """Execute shell command and capture output"""
         output = CodeOutput()
         start_time = time.time()
 
         try:
-            # Create subprocess
+            # Create subprocess with specified working directory
             process = await asyncio.create_subprocess_exec(
                 shell,
                 "-c",
                 command,
                 stdout=asyncio.subprocess.PIPE,
-                stderr=asyncio.subprocess.PIPE
+                stderr=asyncio.subprocess.PIPE,
+                cwd=working_dir
             )
 
             # Wait for the command to complete and capture output
