@@ -71,12 +71,23 @@ Special commands:
                       - The new code must be the complete Python source.
                       - Use with REPL_SOURCE_PATH to read/modify current implementation.
                       - Example:
+                        # Read current implementation
                         with open(REPL_SOURCE_PATH, 'r') as f:
                             current = f.read()
+                        # Make your modifications
                         new_code = current.replace('old', 'new')
+                        # Apply the changes
                         !hot-swap new_code
                       - Warning: Changes modify source directly, consider git commit before major changes.
-                      - Note: Some changes may require server restart (e.g. function signatures).""",
+                      - Note: Some changes may require server restart (e.g. function signatures).
+                      - Note: Global variables like REPL_SOURCE_PATH become available after server restart.
+
+Available features:
+- Execution time tracking
+- Stdout/stderr capture
+- Return value support
+- File system access via standard Python APIs
+- Safe globals including: time, os, sys""",
             inputSchema={
                 "type": "object",
                 "properties": {
