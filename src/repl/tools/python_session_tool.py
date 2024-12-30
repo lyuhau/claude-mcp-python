@@ -140,12 +140,20 @@ class PythonSessionTool(BaseTool):
     def description(self) -> str:
         return """Execute Python code in a persistent interpreter session.
     
-Features:
+The 'python_session' tool is best for:
+- Interactive data analysis sessions where state needs to be maintained
+- Multi-step calculations where results need to be reused
+- Building up complex objects or data structures incrementally
+- Debugging sessions where you want to inspect intermediate states
+- Scenarios where importing libraries once and reusing them is desired
+- Cases where you need to maintain variables between executions
+
+Key features:
 - Maintains state between executions
-- Session timeout after 5 minutes of inactivity
-- Automatic session cleanup
-- Full stdout/stderr capture
-- Execution timing
+- Session persists for 5 minutes of inactivity
+- Full access to Python interpreter features
+- Ability to build context over multiple executions
+- More flexible execution environment
 """
 
     @property

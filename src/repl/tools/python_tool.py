@@ -17,7 +17,23 @@ class PythonTool(BaseTool):
 
     @property
     def description(self) -> str:
-        return "Execute Python code in a sandboxed environment with timing information."
+        return """Execute Python code in a sandboxed environment with timing information.
+
+The 'python' tool is ideal for:
+- Quick, one-off Python code execution
+- Simple calculations or data transformations
+- Code that doesn't need to maintain state
+- Testing small code snippets
+- Scenarios where isolation between executions is desired
+- Cases where you want guaranteed clean environment for each run
+
+Key features:
+- Fresh environment for each execution
+- Safe sandboxed environment
+- Basic built-ins available
+- Timing information for performance analysis
+- Clean separation between runs
+"""
 
     @property
     def schema(self) -> dict:
