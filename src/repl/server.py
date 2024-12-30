@@ -62,9 +62,19 @@ async def handle_list_tools() -> list[types.Tool]:
     return [
         types.Tool(
             name="python",
-            description="""Execute Python code in a sandboxed environment. Special commands:
-!hot-swap <new_code> - Replace the REPL implementation with new code and reload the module.
-                      The new code should be the complete Python source for the REPL.""",
+            description="""Execute Python code in a sandboxed environment with timing information.
+
+Special commands:
+!hot-swap <new_code>  - Updates the REPL's implementation with new code.
+                      - The new code must be the complete Python source.
+                      - Use with REPL_SOURCE_PATH to read/modify current implementation.
+                      - Example:
+                        with open(REPL_SOURCE_PATH, 'r') as f:
+                            current = f.read()
+                        new_code = current.replace('old', 'new')
+                        !hot-swap new_code
+                      - Warning: Changes modify source directly, consider git commit before major changes.
+                      - Note: Some changes may require server restart (e.g. function signatures).""",
             inputSchema={
                 "type": "object",
                 "properties": {
