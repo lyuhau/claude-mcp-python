@@ -79,11 +79,21 @@ Special commands:
                         # Apply the changes
                         !hot-swap new_code
                       - Warning: Changes modify source directly, consider git commit before major changes.
-                      - Note: Some changes may require server restart (e.g. function signatures).
-                      - Note: Global variables like REPL_SOURCE_PATH become available after server restart.
+
+Server restart is required for:
+- Function signature changes
+- Adding new global variables
+- Importing new dependencies
+- Changes to tool interface
+
+Hot-swap works for:
+- Adding/modifying functions
+- Changing output formats
+- Updating internal logic
+- Error handling changes
 
 Available features:
-- Execution time tracking
+- Execution time tracking (second precision)
 - Stdout/stderr capture
 - Return value support
 - File system access via standard Python APIs
