@@ -1,6 +1,5 @@
 import asyncio
 import io
-import sys
 import time
 from contextlib import redirect_stdout, redirect_stderr
 from typing import Any

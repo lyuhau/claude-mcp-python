@@ -18,7 +18,7 @@ class AsyncInterpreter:
         self.stderr = io.StringIO()
         self.last_used = time.time()
 
-    async def execute(self, code: str) -> tuple[str, str, float]:
+    async def execute(self, code_str: str) -> tuple[str, str, float]:
         """Execute code and return (stdout, stderr, execution_time)"""
         self.last_used = time.time()
         start_time = time.time()
@@ -32,7 +32,7 @@ class AsyncInterpreter:
         try:
             # Try to compile the code first
             try:
-                compiled_code = code.compile("<input>", "exec")
+                compiled_code = compile(code_str, "<input>", "exec")
                 if compiled_code is None:
                     self.stderr.write("Incomplete input\n")
                 else:
@@ -40,7 +40,7 @@ class AsyncInterpreter:
             except Exception as e:
                 self.stderr.write(f"Error: {str(e)}\n")
                 # Try running as separate statements
-                for statement in code.split('\n'):
+                for statement in code_str.split('\n'):
                     statement = statement.strip()
                     if statement and not statement.startswith('#'):
                         try:
@@ -65,23 +65,23 @@ class AsyncInterpreter:
 
 class InterpreterManager:
     """Manages multiple interpreter sessions"""
-    
+
     _instance: Optional['InterpreterManager'] = None  # Define _instance class variable
-    
+
     @classmethod
     def get_instance(cls, timeout_seconds: int = 300) -> 'InterpreterManager':
         """Get or create the singleton instance"""
         if not cls._instance:
             cls._instance = cls(timeout_seconds)
         return cls._instance
-    
+
     @classmethod
     def reset_instance(cls):
         """Reset the singleton instance"""
         if cls._instance:
             asyncio.create_task(cls._instance.stop())
             cls._instance = None
-    
+
     def __init__(self, timeout_seconds: int = 300):  # 5 minute default timeout
         self.interpreters: Dict[str, AsyncInterpreter] = {}
         self.timeout_seconds = timeout_seconds
