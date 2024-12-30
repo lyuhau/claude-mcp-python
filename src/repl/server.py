@@ -34,6 +34,7 @@ def execute_code(code: str) -> CodeOutput:
     # Create a safe globals dictionary with basic built-ins
     globals_dict = {
         '__builtins__': __builtins__,
+        'time': time,
         'pd': None,  # Will import pandas if needed
         'pa': None,  # Will import pyarrow if needed
         'REPL_SOURCE_PATH': __file__,  # Give access to this file's path
