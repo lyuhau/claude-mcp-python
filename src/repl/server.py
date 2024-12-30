@@ -62,7 +62,9 @@ async def handle_list_tools() -> list[types.Tool]:
     return [
         types.Tool(
             name="python",
-            description="Execute Python code in a sandboxed environment",
+            description="""Execute Python code in a sandboxed environment. Special commands:
+!hot-swap <new_code> - Replace the REPL implementation with new code and reload the module.
+                      The new code should be the complete Python source for the REPL.""",
             inputSchema={
                 "type": "object",
                 "properties": {
