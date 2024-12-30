@@ -10,6 +10,8 @@ from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 from typing import Any
 
+REPL_SOURCE_PATH = __file__  # Make path available globally
+
 server = Server("repl")
 
 
