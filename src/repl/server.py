@@ -1,4 +1,3 @@
-import asyncio
 from typing import Dict, Type
 
 import mcp.server.stdio
@@ -6,7 +5,7 @@ import mcp.types as types
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
-from repl.tools import PythonTool, PythonSessionTool
+from repl.tools import PythonTool, PythonSessionTool, ShellTool
 from repl.tools.base import BaseTool
 
 
@@ -14,10 +13,10 @@ class ReplServer(Server):
     def __init__(self):
         super().__init__("repl")
         # Initialize all tools
-        self.tools: Dict[str, BaseTool] = {
-            tool.name: tool()
-            for tool in self._get_tool_classes()
-        }
+        self.tools: Dict[str, BaseTool] = {}
+        for tool_class in self._get_tool_classes():
+            tool = tool_class()
+            self.tools[tool.name] = tool
 
     @staticmethod
     def _get_tool_classes() -> list[Type[BaseTool]]:
@@ -25,6 +24,7 @@ class ReplServer(Server):
         return [
             PythonTool,
             PythonSessionTool,
+            ShellTool,
         ]
 
     async def initialize(self, options: InitializationOptions):
