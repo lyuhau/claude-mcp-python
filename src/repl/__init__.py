@@ -1,6 +1,6 @@
 import asyncio
 
-from . import server
+from repl import server
 
 
 def main():
@@ -8,4 +8,4 @@ def main():
     asyncio.run(server.main())
 
 
-__all__ = ["main"]
+__all__ = ['main']
