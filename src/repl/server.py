@@ -1,14 +1,14 @@
-import time
 import asyncio
 import io
+import sys
+import time
+from contextlib import redirect_stdout, redirect_stderr
+from typing import Any
+
 import mcp.server.stdio
 import mcp.types as types
-import os
-import sys
-from contextlib import redirect_stdout, redirect_stderr
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
-from typing import Any
 
 REPL_SOURCE_PATH = __file__  # Make path available globally
 
