@@ -10,9 +10,36 @@ import mcp.types as types
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
+from . import interpreter
+
 REPL_SOURCE_PATH = __file__  # Make path available globally
 
-server = Server("repl")
+
+class ReplServer(Server):
+    def __init__(self):
+        super().__init__("repl")
+        self.interpreter_manager = None  # Will be initialized when server starts
+
+    async def initialize(self, options: InitializationOptions):
+        # Initialize interpreter manager when server starts
+        self.interpreter_manager = interpreter.InterpreterManager.get_instance()  # Use singleton pattern
+        await self.interpreter_manager.start()
+        return await super().initialize(options)
+
+    async def shutdown(self):
+        # Clean up interpreter manager when server shuts down
+        if self.interpreter_manager:
+            await self.interpreter_manager.stop()
+            interpreter.InterpreterManager.reset_instance()  # Reset singleton on shutdown
+        return await super().shutdown()
+
+
+def create_server():
+    """Create a new server instance"""
+    return ReplServer()
+
+
+server = create_server()
 
 
 class CodeOutput:
@@ -64,40 +91,7 @@ async def handle_list_tools() -> list[types.Tool]:
     return [
         types.Tool(
             name="python",
-            description="""Execute Python code in a sandboxed environment with timing information.
-
-Special commands:
-!hot-swap <new_code>  - Updates the REPL's implementation with new code.
-                      - The new code must be the complete Python source.
-                      - Use with REPL_SOURCE_PATH to read/modify current implementation.
-                      - Example:
-                        # Read current implementation
-                        with open(REPL_SOURCE_PATH, 'r') as f:
-                            current = f.read()
-                        # Make your modifications
-                        new_code = current.replace('old', 'new')
-                        # Apply the changes
-                        !hot-swap new_code
-                      - Warning: Changes modify source directly, consider git commit before major changes.
-
-Server restart is required for:
-- Function signature changes
-- Adding new global variables
-- Importing new dependencies
-- Changes to tool interface
-
-Hot-swap works for:
-- Adding/modifying functions
-- Changing output formats
-- Updating internal logic
-- Error handling changes
-
-Available features:
-- Execution time tracking (second precision)
-- Stdout/stderr capture
-- Return value support
-- File system access via standard Python APIs
-- Safe globals including: time, os, sys""",
+            description="""Execute Python code in a sandboxed environment with timing information.""",
             inputSchema={
                 "type": "object",
                 "properties": {
@@ -108,28 +102,34 @@ Available features:
                 },
                 "required": ["code"]
             }
+        ),
+        types.Tool(
+            name="python_session",
+            description="""Execute Python code in a persistent interpreter session.
+    
+Features:
+- Maintains state between executions
+- Session timeout after 5 minutes of inactivity
+- Automatic session cleanup
+- Full stdout/stderr capture
+- Execution timing
+""",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "session_id": {
+                        "type": "string",
+                        "description": "Session ID (leave empty to create new session)"
+                    },
+                    "code": {
+                        "type": "string",
+                        "description": "Python code to execute"
+                    },
+                },
+                "required": ["code"]
+            }
         )
     ]
-
-
-def reload_module():
-    """Reload the current module to apply code changes"""
-    module = sys.modules[__name__]
-    try:
-        with open(__file__, 'r') as f:
-            new_source = f.read()
-        # Create a new module
-        import types as pytypes
-        new_module = pytypes.ModuleType(__name__)
-        # Execute the new source in the new module's namespace
-        exec(new_source, new_module.__dict__)
-        # Update all items in the current module
-        for key in list(module.__dict__.keys()):
-            if not key.startswith('__'):
-                module.__dict__[key] = new_module.__dict__.get(key)
-        print("Successfully reloaded module!")
-    except Exception as e:
-        print(f"Error reloading module: {e}")
 
 
 @server.call_tool()
@@ -145,31 +145,6 @@ async def handle_call_tool(
         code = arguments.get("code")
         if not code:
             raise ValueError("Missing code parameter")
-
-        # Check for special hot-swap command
-        if code.startswith("!hot-swap"):
-            new_code = code[len("!hot-swap"):].strip()
-            if new_code:
-                # Write new code to file
-                try:
-                    with open(__file__, 'w') as f:
-                        f.write(new_code)
-                    # Reload the module
-                    reload_module()
-                    return [types.TextContent(
-                        type="text",
-                        text="Successfully hot-swapped REPL implementation!"
-                    )]
-                except Exception as e:
-                    return [types.TextContent(
-                        type="text",
-                        text=f"Error during hot-swap: {str(e)}"
-                    )]
-            else:
-                return [types.TextContent(
-                    type="text",
-                    text="Error: No new code provided for hot-swap"
-                )]
 
         # Normal code execution
         output = execute_code(code)
@@ -189,6 +164,44 @@ async def handle_call_tool(
             type="text",
             text="\n".join(response) if response else "No output"
         )]
+    elif name == "python_session":
+        if not server.interpreter_manager:
+            raise RuntimeError("Interpreter manager not initialized")
+
+        session_id = arguments.get("session_id")
+        code = arguments.get("code")
+
+        if not session_id:
+            # Create new session
+            session_id = server.interpreter_manager.create_session()
+            response = [f"Created new session: {session_id}"]
+        else:
+            response = []
+
+        try:
+            stdout, stderr, exec_time = await server.interpreter_manager.execute_code(
+                session_id, code
+            )
+
+            response.extend([
+                f"Session: {session_id}",
+                f"Execution time: {exec_time:.4f} seconds",
+            ])
+
+            if stdout:
+                response.append(f"Standard Output:\n{stdout}")
+            if stderr:
+                response.append(f"Standard Error:\n{stderr}")
+
+            return [types.TextContent(
+                type="text",
+                text="\n".join(response)
+            )]
+        except ValueError as e:
+            return [types.TextContent(
+                type="text",
+                text=f"Error: {str(e)}"
+            )]
     else:
         raise ValueError(f"Unknown tool: {name}")
 
