@@ -1,3 +1,4 @@
+import time
 import asyncio
 import io
 import mcp.server.stdio
@@ -16,17 +17,19 @@ class CodeOutput:
     """Capture code execution output"""
 
     def __init__(self):
+        self.execution_time = 0.0  # Add timing
         self.stdout = io.StringIO()
         self.stderr = io.StringIO()
         self.result = None
 
-    def get_output(self) -> tuple[str, str, Any]:
-        return self.stdout.getvalue(), self.stderr.getvalue(), self.result
+    def get_output(self) -> tuple[str, str, Any, float]:
+        return self.stdout.getvalue(), self.stderr.getvalue(), self.result, self.execution_time
 
 
 def execute_code(code: str) -> CodeOutput:
     """Execute Python code and capture output"""
     output = CodeOutput()
+    start_time = time.time()
 
     # Create a safe globals dictionary with basic built-ins
     globals_dict = {
@@ -47,7 +50,8 @@ def execute_code(code: str) -> CodeOutput:
                 exec(code, globals_dict)
     except Exception as e:
         print(f"Error: {str(e)}", file=output.stderr)
-
+    finally:
+        output.execution_time = time.time() - start_time
     return output
 
 
@@ -133,10 +137,10 @@ async def handle_call_tool(
 
         # Normal code execution
         output = execute_code(code)
-        stdout, stderr, result = output.get_output()
+        stdout, stderr, result, exec_time = output.get_output()
 
         # Format the response
-        response = []
+        response = [f"Execution time: {exec_time:.4f} seconds"]
 
         if stdout:
             response.append(f"Standard Output:\n{stdout}")
