@@ -1,8 +1,9 @@
 import logging
-import mcp.types as types
 import pathlib
+import asyncio
 from typing import List
 
+import mcp.types as types
 from repl.tools.base import BaseTool
 
 # Configure logging
@@ -21,9 +22,10 @@ file_handler.setFormatter(logging.Formatter(log_format))
 # Add handlers to the logger
 logger.addHandler(file_handler)
 
-
 class ShellStatusTool(BaseTool):
     """Tool for checking shell command status"""
+
+    MAX_WAIT = 5.0  # Maximum time to wait for task completion
 
     def __init__(self, shell_tool):
         self.shell_tool = shell_tool
@@ -35,7 +37,8 @@ class ShellStatusTool(BaseTool):
     @property
     def description(self) -> str:
         return """Check the status of a shell command that switched to async mode.
-Provide the task ID that was returned by the shell command."""
+Provide the task ID that was returned by the shell command.
+Will wait up to 5 seconds for task completion."""
 
     @property
     def schema(self) -> dict:
@@ -61,6 +64,18 @@ Provide the task ID that was returned by the shell command."""
         task = self.shell_tool.tasks[task_id]
         logger.debug(f"Checking status of task {task_id}: {task.status}")
 
+        # If task isn't completed yet, wait up to MAX_WAIT seconds
+        if task.status == "running":
+            try:
+                start_time = asyncio.get_event_loop().time()
+                while (asyncio.get_event_loop().time() - start_time) < self.MAX_WAIT:
+                    if task.status != "running":
+                        break
+                    await asyncio.sleep(0.1)  # Check every 100ms
+            except Exception as e:
+                logger.error(f"Error while waiting for task completion: {e}")
+
+        # Now format the response
         status_text = f"Status: {task.status}\n"
         if task.execution_time:
             status_text += f"Execution time: {task.execution_time:.4f} seconds\n"
