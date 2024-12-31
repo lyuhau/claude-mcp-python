@@ -1,14 +1,80 @@
+import asyncio
 import logging
 from typing import List
 
 import mcp.types as types
+
 from repl.tools.base import BaseTool
 
 # Configure logging
 logger = logging.getLogger('shell_status_tool')
 
+
 class ShellStatusTool(BaseTool):
-    """Tool for checking shell command status"""
+    """Check the status of background shell commands.
+    
+    # Operation
+    1. Automatic Waiting:
+       - If task is still running, waits up to 5 seconds for completion
+       - Checks status every 100ms
+       - Returns latest status even if task isn't finished
+       - Can be called multiple times on the same task
+    
+    2. Status Values:
+       - "pending": Task created but not started
+       - "running": Task is currently executing
+       - "completed": Task finished successfully
+       - "failed": Task encountered an error
+    
+    3. Response Format:
+       ```
+       Status: completed
+       Execution time: 1.2345 seconds
+       
+       Standard Output:
+       <stdout content>
+       
+       Standard Error:
+       <stderr content>
+       
+       Return Value:
+       0
+       ```
+    
+    # Best Practices
+    1. Status Checking:
+       - No need to wait before checking status
+       - Tool automatically waits up to 5 seconds
+       - Can check status immediately after getting task ID
+       Example:
+       ```python
+       task = await shell.execute({"command": "long_command"})
+       status = await shell_status.execute({"task_id": task_id})
+       # Status includes results if completed within 5s
+       ```
+    
+    2. Multiple Checks:
+       - Safe to check status multiple times
+       - Each check waits up to 5 seconds
+       - Previous checks don't affect later ones
+       Example:
+       ```python
+       status1 = await shell_status.execute({"task_id": task_id})
+       # Shows "running" if not done
+       status2 = await shell_status.execute({"task_id": task_id})
+       # Shows results once complete
+       ```
+    
+    3. Task Lifecycle:
+       - Task IDs remain valid until server restart
+       - Can check old tasks' status and output
+       - Failed tasks include error details in stderr
+    
+    4. Error Handling:
+       - Invalid task IDs raise immediate error
+       - Check status field to determine completion
+       - Non-zero return values indicate command failure
+    """
 
     MAX_WAIT = 5.0  # Maximum time to wait for task completion
 

@@ -1,16 +1,18 @@
 import asyncio
+import logging
 import os
 import pathlib
 import time
 import uuid
-import logging
 from typing import List, Dict, Optional
 
 import mcp.types as types
+
 from repl.tools.base import BaseTool, CodeOutput
 
 # Configure logging
 logger = logging.getLogger('shell_tool')
+
 
 class ShellTask:
     def __init__(self, command: str, shell: str, working_dir: str):
@@ -26,8 +28,75 @@ class ShellTask:
         self.execution_time = None
         self.start_time = None
 
+
 class ShellTool(BaseTool):
-    """Tool for executing shell commands with automatic async fallback"""
+    """Execute shell commands with automatic async mode for long-running commands.
+
+    # Operation Modes
+    1. Quick Commands (under 5 seconds):
+       - Returns results immediately in the same response
+       - Output includes stdout, stderr, execution time, and return value
+       Example:
+       ```
+       Standard Output: hello world
+       Standard Error: 
+       Execution time: 0.0123 seconds
+       Return Value: 0
+       ```
+
+    2. Long Commands (over 5 seconds):
+       - Switches to async mode automatically
+       - Returns a task ID immediately
+       - Command continues running in the background
+       - Use shell_status tool to check progress
+       Example:
+       ```
+       Task started with ID: 1234-5678-90
+       Use shell_status with this task ID to check progress.
+       ```
+
+    # Best Practices
+    1. Single Commands:
+       - Prefer single commands over chained commands
+       - Each shell invocation has its own 5-second timeout
+       Bad:  "wget file && tar xf file && rm file"  # Might timeout mid-chain
+       Good: Run each command separately with status checks
+
+    2. Working Directory:
+       - If unspecified, defaults to user's home directory
+       - Must exist or command will fail with error
+       - Persists only for the single command
+
+    3. Shell Selection:
+       - Defaults to 'bash'
+       - Available shells: bash, sh, zsh
+       - Each command runs in a fresh shell instance
+    
+    4. Background Operation:
+       - Long commands run fully in background
+       - Can run multiple async commands in parallel
+       - Use shell_status to track each task separately
+       
+    5. Error Handling:
+       - Always check return value for non-zero exit codes
+       - stderr may contain important messages even on success
+       - Failed commands include error details in stderr
+
+    # Common Patterns
+    1. Quick Command:
+       ```python
+       response = await shell.execute({"command": "echo hello"})
+       # Immediate response with output
+       ```
+
+    2. Long Command:
+       ```python
+       task = await shell.execute({"command": "sleep 10"})
+       # Returns task ID immediately
+       status = await shell_status.execute({"task_id": task_id})
+       # Check status after a few seconds
+       ```
+    """
 
     SYNC_TIMEOUT = 5.0  # Switch to async mode if command doesn't complete within 5 seconds
 
@@ -102,10 +171,10 @@ Example responses:
         try:
             # Try to execute synchronously with timeout
             result = await asyncio.wait_for(
-                self._execute_task(task.id), 
+                self._execute_task(task.id),
                 timeout=self.SYNC_TIMEOUT
             )
-            
+
             # If we get here, command completed within timeout
             output_text = ""
             if result.stdout:
@@ -123,10 +192,10 @@ Example responses:
         except asyncio.TimeoutError:
             # Command is taking too long, switch to async mode
             logger.info(f"Command taking longer than {self.SYNC_TIMEOUT}s, switching to async mode")
-            
+
             # Make sure the task continues running in the background
             asyncio.create_task(self._execute_task(task.id))
-            
+
             return [types.TextContent(
                 type="text",
                 text=f"Task started with ID: {task.id}\nUse shell_status with this task ID to check progress."
@@ -137,7 +206,7 @@ Example responses:
         output = CodeOutput()
         task.status = "running"
         task.start_time = time.time()
-        
+
         try:
             logger.debug(f"Creating subprocess for task {task_id}")
             task.process = await asyncio.create_subprocess_exec(
@@ -158,7 +227,7 @@ Example responses:
             output.stdout = stdout.decode() if stdout else ""
             output.stderr = stderr.decode() if stderr else ""
             output.result = task.process.returncode
-            
+
             # Update task status
             task.stdout = output.stdout
             task.stderr = output.stderr
