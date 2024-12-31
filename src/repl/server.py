@@ -1,12 +1,12 @@
-from typing import Dict, Type
-
 import mcp.server.stdio
 import mcp.types as types
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
+from typing import Dict, Type
 
 from repl.tools import PythonTool, PythonSessionTool, ShellTool
 from repl.tools.base import BaseTool
+from repl.tools.shell_status_tool import ShellStatusTool
 
 
 class ReplServer(Server):
@@ -14,9 +14,17 @@ class ReplServer(Server):
         super().__init__("repl")
         # Initialize all tools
         self.tools: Dict[str, BaseTool] = {}
+
+        # Create shell tool first since status tool needs reference to it
+        self.shell_tool = ShellTool()
+        self.tools[self.shell_tool.name] = self.shell_tool
+        self.tools["shell_status"] = ShellStatusTool(self.shell_tool)
+
+        # Add other tools
         for tool_class in self._get_tool_classes():
-            tool = tool_class()
-            self.tools[tool.name] = tool
+            if tool_class != ShellTool:  # Skip ShellTool since we already created it
+                tool = tool_class()
+                self.tools[tool.name] = tool
 
     @staticmethod
     def _get_tool_classes() -> list[Type[BaseTool]]:
