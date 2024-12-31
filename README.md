@@ -145,7 +145,11 @@ Potential areas for enhancement:
 1. Clone the repository
 2. Install dependencies:
    ```bash
-   pip install -e .
+   poetry install
+   ```
+   or
+   ```bash
+   uv pip install -r pyproject.toml
    ```
 
 ## Integration with Claude Desktop
@@ -194,9 +198,9 @@ The REPL server needs to be configured in Claude Desktop's configuration file. T
 ```
 
 Add this configuration to your Claude Desktop config file, adjusting paths according to your environment. The config file location varies by operating system:
-- Windows: `%APPDATA%/AnthropicClaude/config.json`
-- macOS: `~/Library/Application Support/AnthropicClaude/config.json`
-- Linux: `~/.config/AnthropicClaude/config.json`
+- Windows: `%APPDATA%/Roaming/Claude/claude_desktop_config.json`
+- macOS: `not sure`
+- Linux: `not sure`
 
 ## Using the REPL Server
 
