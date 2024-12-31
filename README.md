@@ -56,14 +56,6 @@ Two complementary Python execution tools:
 - Supports incremental development
 - Full access to interpreter features
 
-### 3. Smart Task Management
-
-The shell execution system includes several smart features:
-- Automatic mode selection based on execution time
-- Task status polling with intelligent waiting (up to 5s)
-- Comprehensive logging for debugging
-- Clean process management and cleanup
-
 ## Technical Details
 
 ### Architecture
@@ -156,18 +148,63 @@ Potential areas for enhancement:
    pip install -e .
    ```
 
-## Usage
+## Integration with Claude Desktop
 
-1. Start the REPL server:
-   ```bash
-   python -m repl
-   ```
+The REPL server needs to be configured in Claude Desktop's configuration file. The exact configuration depends on your operating system:
 
-2. The server can then be used through Claude with the following tools:
-   - `shell`: Execute shell commands
-   - `shell_status`: Check status of long-running commands
-   - `python`: Execute one-off Python code
-   - `python_session`: Execute Python code in persistent sessions
+### Windows with WSL (Windows Subsystem for Linux)
+```json
+{
+  "mcpServers": {
+    "repl": {
+      "command": "wsl",
+      "args": [
+        "--exec",
+        "bash",
+        "-c",
+        "/path/to/your/python/environment/bin/python -m repl"
+      ]
+    }
+  }
+}
+```
+
+### macOS or Linux
+```json
+{
+  "mcpServers": {
+    "repl": {
+      "command": "/path/to/your/python/environment/bin/python",
+      "args": ["-m", "repl"]
+    }
+  }
+}
+```
+
+### Windows (Native)
+```json
+{
+  "mcpServers": {
+    "repl": {
+      "command": "C:\\Path\\To\\Your\\Python\\Environment\\python.exe",
+      "args": ["-m", "repl"]
+    }
+  }
+}
+```
+
+Add this configuration to your Claude Desktop config file, adjusting paths according to your environment. The config file location varies by operating system:
+- Windows: `%APPDATA%/AnthropicClaude/config.json`
+- macOS: `~/Library/Application Support/AnthropicClaude/config.json`
+- Linux: `~/.config/AnthropicClaude/config.json`
+
+## Using the REPL Server
+
+Once configured, the following tools will be available in Claude:
+- `shell`: Execute shell commands
+- `shell_status`: Check status of long-running commands
+- `python`: Execute one-off Python code
+- `python_session`: Execute Python code in persistent sessions
 
 ## Contributing
 
