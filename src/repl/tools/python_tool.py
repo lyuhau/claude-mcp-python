@@ -1,9 +1,9 @@
 import time
+
+import mcp.types as types
 from contextlib import redirect_stdout, redirect_stderr
 from io import StringIO
 from typing import List
-
-import mcp.types as types
 
 from repl.tools.base import BaseTool, CodeOutput
 

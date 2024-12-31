@@ -1,7 +1,6 @@
+import mcp.types as types
 from abc import ABC, abstractmethod
 from typing import List
-
-import mcp.types as types
 
 
 class BaseTool(ABC):
