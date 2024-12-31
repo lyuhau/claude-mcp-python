@@ -1,6 +1,4 @@
 import logging
-import pathlib
-import asyncio
 from typing import List
 
 import mcp.types as types
@@ -8,19 +6,6 @@ from repl.tools.base import BaseTool
 
 # Configure logging
 logger = logging.getLogger('shell_status_tool')
-logger.setLevel(logging.DEBUG)
-
-# Create handlers
-log_file = pathlib.Path('/mnt/d/Users/HauHau/PycharmProjects/claude/repl/logs/shell_status.log')
-file_handler = logging.FileHandler(log_file)
-file_handler.setLevel(logging.DEBUG)
-
-# Create formatters and add it to handlers
-log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-file_handler.setFormatter(logging.Formatter(log_format))
-
-# Add handlers to the logger
-logger.addHandler(file_handler)
 
 class ShellStatusTool(BaseTool):
     """Tool for checking shell command status"""

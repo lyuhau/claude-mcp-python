@@ -20,7 +20,7 @@ The shell tool (`ShellTool`) provides a transparent way to execute shell command
 - Longer-running commands automatically switch to async mode
 - Async mode provides task IDs for status checking
 - Built-in timeout handling prevents server crashes
-- Comprehensive logging for debugging
+- Standard Python logging for debugging
 
 Example usage:
 ```python
@@ -79,7 +79,7 @@ The server is built on several key components:
    - Transparent async fallback
    - Task management and status tracking
    - Process monitoring and cleanup
-   - Comprehensive logging
+   - Standard Python logging
 
 3. **Python Execution Systems**
    - Sandboxed one-off execution
@@ -122,7 +122,7 @@ The system includes comprehensive error handling:
 
 ### Logging
 
-Extensive logging is implemented for debugging:
+Standard Python logging is used for debugging:
 - Command execution details
 - Process creation and completion
 - Execution times and status changes
@@ -146,6 +146,7 @@ Potential areas for enhancement:
 3. More sophisticated session management
 4. Enhanced error recovery mechanisms
 5. Additional debugging tools
+6. Configurable logging options
 
 ## Installation
 

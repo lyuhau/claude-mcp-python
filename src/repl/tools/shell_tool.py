@@ -1,31 +1,16 @@
-import time
-
 import asyncio
-import logging
-import mcp.types as types
 import os
 import pathlib
+import time
 import uuid
+import logging
 from typing import List, Dict, Optional
 
+import mcp.types as types
 from repl.tools.base import BaseTool, CodeOutput
 
 # Configure logging
 logger = logging.getLogger('shell_tool')
-logger.setLevel(logging.DEBUG)
-
-# Create handlers
-log_file = pathlib.Path('/mnt/d/Users/HauHau/PycharmProjects/claude/repl/logs/shell_tool.log')
-file_handler = logging.FileHandler(log_file)
-file_handler.setLevel(logging.DEBUG)
-
-# Create formatters and add it to handlers
-log_format = '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
-file_handler.setFormatter(logging.Formatter(log_format))
-
-# Add handlers to the logger
-logger.addHandler(file_handler)
-
 
 class ShellTask:
     def __init__(self, command: str, shell: str, working_dir: str):
@@ -40,7 +25,6 @@ class ShellTask:
         self.result = None
         self.execution_time = None
         self.start_time = None
-
 
 class ShellTool(BaseTool):
     """Tool for executing shell commands with automatic async fallback"""
@@ -118,10 +102,10 @@ Example responses:
         try:
             # Try to execute synchronously with timeout
             result = await asyncio.wait_for(
-                self._execute_task(task.id),
+                self._execute_task(task.id), 
                 timeout=self.SYNC_TIMEOUT
             )
-
+            
             # If we get here, command completed within timeout
             output_text = ""
             if result.stdout:
@@ -139,10 +123,10 @@ Example responses:
         except asyncio.TimeoutError:
             # Command is taking too long, switch to async mode
             logger.info(f"Command taking longer than {self.SYNC_TIMEOUT}s, switching to async mode")
-
+            
             # Make sure the task continues running in the background
             asyncio.create_task(self._execute_task(task.id))
-
+            
             return [types.TextContent(
                 type="text",
                 text=f"Task started with ID: {task.id}\nUse shell_status with this task ID to check progress."
@@ -153,7 +137,7 @@ Example responses:
         output = CodeOutput()
         task.status = "running"
         task.start_time = time.time()
-
+        
         try:
             logger.debug(f"Creating subprocess for task {task_id}")
             task.process = await asyncio.create_subprocess_exec(
@@ -174,7 +158,7 @@ Example responses:
             output.stdout = stdout.decode() if stdout else ""
             output.stderr = stderr.decode() if stderr else ""
             output.result = task.process.returncode
-
+            
             # Update task status
             task.stdout = output.stdout
             task.stderr = output.stderr
