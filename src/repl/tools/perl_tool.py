@@ -86,7 +86,7 @@ Example Perl patterns:
 use strict;
 use warnings;
 no warnings 'uninitialized';
-use open ':std', ':encoding(UTF-8)';
+use utf8::all;
 local $/;
 my $content = <>;
 
@@ -107,7 +107,8 @@ print $content;
                     script_path,
                     stdin=open(file_path, "r", encoding="utf-8"),
                     stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE
+                    stderr=asyncio.subprocess.PIPE,
+                    env={'PERL_UNICODE': 'AS'}  # Additional Unicode handling at process level
                 )
                 
                 stdout, stderr = await process.communicate()
