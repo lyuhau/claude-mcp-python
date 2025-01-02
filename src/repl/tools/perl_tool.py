@@ -64,6 +64,11 @@ Example Perl patterns:
                 "perl_script": {
                     "type": "string",
                     "description": "Perl substitution commands to apply (without boilerplate)"
+                },
+                "clean_whitespace": {
+                    "type": "boolean",
+                    "description": "Remove trailing whitespace (default: true)",
+                    "default": True
                 }
             },
             "required": ["file_path", "perl_script"]
@@ -72,6 +77,7 @@ Example Perl patterns:
     async def execute(self, arguments: dict) -> List[types.TextContent]:
         file_path = arguments.get("file_path")
         perl_script = arguments.get("perl_script")
+        clean_whitespace = arguments.get("clean_whitespace", True)
         
         if not os.path.exists(file_path):
             raise ValueError(f"File does not exist: {file_path}")
@@ -82,7 +88,7 @@ Example Perl patterns:
             
             # Write the Perl script with all necessary boilerplate
             with open(script_path, "w", encoding="utf-8") as f:
-                f.write(f"""#!/usr/bin/env perl
+                script_content = f"""#!/usr/bin/env perl
 use strict;
 use warnings;
 no warnings 'uninitialized';
@@ -94,10 +100,12 @@ my $content = <>;
 
 {perl_script}
 
-$content =~ s/[ \t]+$//mg;
-
-print $content;
-""")
+"""
+                if clean_whitespace:
+                    script_content += "$content =~ s/[ \\t]+$//mg;\n\n"
+                
+                script_content += "print $content;\n"
+                f.write(script_content)
             
             # Make script executable
             os.chmod(script_path, 0o755)
