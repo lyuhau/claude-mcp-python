@@ -5,7 +5,7 @@ This document contains implementation details, design decisions, and development
 ## Architecture Overview
 
 ### Tool Framework
-- All tools inherit from `BaseTool`
+- All tools inherit from `BaseTool` 
 - MCP (Model Context Protocol) integration for Claude Desktop
 - Standard output formatting via `CodeOutput` class
 - Consistent error handling patterns
@@ -14,14 +14,13 @@ This document contains implementation details, design decisions, and development
 
 #### One-off Python (`PythonTool`)
 - Uses fresh globals dict each time
-- Built-in pandas/pyarrow lazy imports
+- Placeholder support for pandas/pyarrow (not yet implemented)
 - Tries eval() first, falls back to exec()
 - Captures stdout/stderr via StringIO
 - Timing info included by default
 
 Design decisions:
 - Fresh environment each time for predictability
-- Basic imports available but lazy-loaded
 - Simple output capture over process isolation
 - No persistent state to avoid memory leaks
 
@@ -30,6 +29,7 @@ Design decisions:
 - Session timeout after 5 minutes of inactivity
 - Background cleanup of expired sessions
 - Full traceback for better error messages
+- Separate stdout/stderr capture per session
 
 Design decisions:
 - Session-based for data analysis workflows
@@ -40,10 +40,11 @@ Design decisions:
 ### Shell Tools
 
 #### Command Execution (`ShellTool`)
-- 5-second threshold for async mode
+- 4.9-second threshold for async mode
 - Task-based management system
 - Automatic process cleanup
 - Working directory validation
+- Separate subprocess pipes for stdout/stderr
 
 Design choices:
 - Short timeout favors responsiveness
@@ -55,7 +56,7 @@ Design choices:
 - Smart polling with 100ms intervals
 - Up to 5-second wait per check
 - Detailed status information
-- Execution time tracking
+- Execution time and running time tracking
 
 Rationale:
 - Quick polling for responsiveness
@@ -70,6 +71,7 @@ Rationale:
 - UTF-8 handling built-in
 - Optional whitespace cleaning
 - Pattern-based transformations
+- Safe temporary file cleanup
 
 Key decisions:
 - Temp files avoid shell escaping issues
@@ -88,34 +90,29 @@ Key decisions:
 ### Error Handling
 - Detailed error messages
 - Proper exception types
-- Clean resource handling
+- Clean resource handling 
 - Fail early and explicitly
 
-### Performance
+### Performance Considerations
 - Async for long operations
 - Resource cleanup
-- Memory usage monitoring
 - Process management
-
-### Testing
-- Unit tests for tools
-- Integration tests with Claude
-- Performance benchmarks
-- Security testing needed
+- Separate output handlers for stdout/stderr
+- Task-based long-running processes
 
 ## Future Improvements
 
 ### High Priority
-1. Resource usage monitoring
-2. Enhanced error recovery
-3. Better session management
-4. Process isolation
+1. Implement pandas/pyarrow imports in PythonTool
+2. Add process isolation
+3. Add resource usage monitoring
+4. Add task cancellation support
 
-### Nice to Have
-1. Task cancelation
-2. More debugging tools
-3. Configuration options
-4. Additional tool types
+### Infrastructure Needed
+1. Test suite setup
+2. CI/CD pipeline
+3. Documentation automation
+4. Performance benchmarks
 
 ## Security Notes
 
@@ -124,27 +121,30 @@ Key decisions:
 - Working directory validation
 - UTF-8 encoding enforced
 - Resource limits needed
-- Process isolation considerations
+- Process isolation needed
 
 ## Troubleshooting
 
 Common issues and solutions:
 1. Session timeouts
-   - Check activity threshold
-   - Verify cleanup tasks
+   - Check activity threshold (should be 300 seconds)
+   - Verify cleanup tasks running properly
+   - Check interpreter disposal
 2. Process hangs
-   - Review timeout settings
-   - Check resource usage
+   - Review timeout settings (4.9s threshold)
+   - Check subprocess management
+   - Verify async task cleanup
 3. File encoding
-   - Verify UTF-8 handling
+   - UTF-8 handling is automatic
    - Check input validation
+   - Verify temp file cleanup
 
 ## Release Process
-1. Version bump
-2. Changelog update
-3. Test suite run
-4. Documentation review
-5. Security audit
-6. Release notes
+1. Version bump in pyproject.toml
+2. Update CHANGELOG.md
+3. Documentation review
+4. Security review
+5. Release notes
+6. Tag version in git
 
 Remember: This doc is for developer context - keep user-facing docs simple!
