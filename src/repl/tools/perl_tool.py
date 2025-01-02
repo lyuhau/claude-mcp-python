@@ -85,9 +85,8 @@ Example Perl patterns:
                 f.write(f"""#!/usr/bin/env perl
 use strict;
 use warnings;
-use utf8;
-binmode(STDIN, ":utf8");
-binmode(STDOUT, ":utf8");
+no warnings 'uninitialized';
+use open ':std', ':encoding(UTF-8)';
 local $/;
 my $content = <>;
 
