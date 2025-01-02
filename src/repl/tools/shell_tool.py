@@ -104,7 +104,7 @@ class ShellTool(BaseTool):
        ```
     """
 
-    SYNC_TIMEOUT = 5.0  # Switch to async mode if command doesn't complete within 5 seconds
+    SYNC_TIMEOUT = 4.9  # Switch to async mode if command doesn't complete within 5 seconds
 
     def __init__(self):
         self.tasks: Dict[str, ShellTask] = {}

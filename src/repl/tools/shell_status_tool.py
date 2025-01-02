@@ -77,7 +77,7 @@ class ShellStatusTool(BaseTool):
        - Non-zero return values indicate command failure
     """
 
-    MAX_WAIT = 5.0  # Maximum time to wait for task completion
+    MAX_WAIT = 4.9  # Maximum time to wait for task completion
 
     def __init__(self, shell_tool: ShellTool):
         self.shell_tool = shell_tool
