@@ -5,7 +5,7 @@ import mcp.types as types
 from mcp.server import NotificationOptions, Server
 from mcp.server.models import InitializationOptions
 
-from repl.tools import PythonTool, PythonSessionTool, ShellTool
+from repl.tools import PythonTool, PythonSessionTool, ShellTool, PerlTool
 from repl.tools.base import BaseTool
 from repl.tools.shell_status_tool import ShellStatusTool
 
@@ -34,6 +34,7 @@ class ReplServer(Server):
             PythonTool,
             PythonSessionTool,
             ShellTool,
+            PerlTool,
         ]
 
     async def initialize(self, options: InitializationOptions):
