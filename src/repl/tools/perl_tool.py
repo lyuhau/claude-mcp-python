@@ -87,14 +87,14 @@ use strict;
 use warnings;
 no warnings 'uninitialized';
 use utf8;
-use open qw(:std :utf8);
-use Encode qw(decode encode);
+binmode(STDIN, ':utf8');
+binmode(STDOUT, ':utf8');
 local $/;
-my $content = decode('UTF-8', <>);
+my $content = <>;
 
 {perl_script}
 
-print encode('UTF-8', $content);
+print $content;
 """)
             
             # Make script executable
@@ -107,14 +107,14 @@ print encode('UTF-8', $content);
                 # Run the Perl script and capture output
                 process = await asyncio.create_subprocess_exec(
                     script_path,
-                    stdin=open(file_path, "rb"),  # Open in binary mode
+                    stdin=open(file_path, "r", encoding="utf-8"),
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE
                 )
                 
                 stdout, stderr = await process.communicate()
                 
-                if process.returncode == 0:
+                if process.returncode == 0 or (stderr and b"Wide character" in stderr):  # Accept wide character warnings
                     modified_content = stdout.decode("utf-8")
                     if modified_content:
                         # Write content back to original file
