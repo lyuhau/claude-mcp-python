@@ -94,6 +94,8 @@ my $content = <>;
 
 {perl_script}
 
+$content =~ s/[ \t]+$//mg;
+
 print $content;
 """)
             
