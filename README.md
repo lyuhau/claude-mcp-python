@@ -56,6 +56,41 @@ Two complementary Python execution tools:
 - Supports incremental development
 - Full access to interpreter features
 
+### 3. File Modifications with Perl
+
+The Perl tool (`PerlTool`) provides efficient and reliable file modifications:
+
+- Pattern-based text transformations using Perl regex
+- UTF-8 support for international text and emojis
+- Automatic trailing whitespace cleanup (optional)
+- Safe file handling with validation
+- No shell escaping issues
+
+Example usage:
+```python
+# Simple replacement
+> perl execute: {
+    "file_path": "README.md",
+    "perl_script": "$content =~ s/old/new/g;"
+}
+File modified successfully
+
+# Complex multi-line change with capture groups
+> perl execute: {
+    "file_path": "config.yaml",
+    "perl_script": "$content =~ s/(start:.*?\n).*?(end:)/$1  new: value\n  other: stuff\n$2/s;"
+}
+File modified successfully
+
+# Preserve trailing whitespace (e.g., for Makefiles)
+> perl execute: {
+    "file_path": "Makefile",
+    "perl_script": "...",
+    "clean_whitespace": false
+}
+File modified successfully
+```
+
 ## Technical Details
 
 ### Architecture
@@ -209,6 +244,7 @@ Once configured, the following tools will be available in Claude:
 - `shell_status`: Check status of long-running commands
 - `python`: Execute one-off Python code
 - `python_session`: Execute Python code in persistent sessions
+- `perl`: Modify files using Perl's text processing capabilities
 
 ## Contributing
 
