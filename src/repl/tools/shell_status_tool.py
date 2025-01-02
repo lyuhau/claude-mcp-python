@@ -4,6 +4,7 @@ from typing import List
 
 import mcp.types as types
 
+from repl.tools import ShellTool
 from repl.tools.base import BaseTool
 
 # Configure logging
@@ -78,7 +79,7 @@ class ShellStatusTool(BaseTool):
 
     MAX_WAIT = 5.0  # Maximum time to wait for task completion
 
-    def __init__(self, shell_tool):
+    def __init__(self, shell_tool: ShellTool):
         self.shell_tool = shell_tool
 
     @property
@@ -130,6 +131,8 @@ Will wait up to 5 seconds for task completion."""
         status_text = f"Status: {task.status}\n"
         if task.execution_time:
             status_text += f"Execution time: {task.execution_time:.4f} seconds\n"
+        else:
+            status_text += f"Running time: {task.running_time:.4f} seconds\n"
         if task.stdout:
             status_text += f"\nStandard Output:\n{task.stdout}\n"
         if task.stderr:

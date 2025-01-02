@@ -28,6 +28,12 @@ class ShellTask:
         self.execution_time = None
         self.start_time = None
 
+    @property
+    def running_time(self) -> float:
+        if self.start_time:
+            return time.time() - self.start_time
+        return 0.0
+
 
 class ShellTool(BaseTool):
     """Execute shell commands with automatic async mode for long-running commands.
