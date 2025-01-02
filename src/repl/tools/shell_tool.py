@@ -1,12 +1,12 @@
+import time
+
 import asyncio
 import logging
+import mcp.types as types
 import os
 import pathlib
-import time
 import uuid
 from typing import List, Dict, Optional
-
-import mcp.types as types
 
 from repl.tools.base import BaseTool, CodeOutput
 
@@ -143,8 +143,7 @@ Example responses:
                 },
                 "working_dir": {
                     "type": "string",
-                    "description": "Working directory to execute the command in (defaults to user home)",
-                    "default": ""
+                    "description": "Working directory to execute the command in (defaults to user home)"
                 },
                 "command": {
                     "type": "string",
@@ -160,10 +159,7 @@ Example responses:
             raise ValueError("Missing command parameter")
 
         shell = arguments.get("shell", "bash")
-        working_dir = arguments.get("working_dir")
-
-        if not working_dir:
-            working_dir = pathlib.Path.home()
+        working_dir = arguments.get("working_dir", str(pathlib.Path.home()))
 
         # Verify working directory exists
         if working_dir and not os.path.exists(working_dir):

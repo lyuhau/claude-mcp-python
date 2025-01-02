@@ -1,15 +1,16 @@
+import time
+
 import asyncio
 import logging
-import tempfile
-import os
-import time
-from typing import List
-
 import mcp.types as types
+import os
+import tempfile
+from typing import List
 
 from repl.tools.base import BaseTool, CodeOutput
 
 logger = logging.getLogger('perl_tool')
+
 
 class PerlTool(BaseTool):
     """Efficient file modification tool using Perl.
@@ -31,7 +32,7 @@ class PerlTool(BaseTool):
     '''
     ```
     """
-    
+
     @property
     def name(self) -> str:
         return "perl"
@@ -78,14 +79,14 @@ Example Perl patterns:
         file_path = arguments.get("file_path")
         perl_script = arguments.get("perl_script")
         clean_whitespace = arguments.get("clean_whitespace", True)
-        
+
         if not os.path.exists(file_path):
             raise ValueError(f"File does not exist: {file_path}")
-            
+
         # Create temporary directory for our script
         with tempfile.TemporaryDirectory() as temp_dir:
             script_path = os.path.join(temp_dir, "modify.pl")
-            
+
             # Write the Perl script with all necessary boilerplate
             with open(script_path, "w", encoding="utf-8") as f:
                 script_content = f"""#!/usr/bin/env perl
@@ -103,16 +104,16 @@ my $content = <>;
 """
                 if clean_whitespace:
                     script_content += "$content =~ s/[ \\t]+$//mg;\n\n"
-                
+
                 script_content += "print $content;\n"
                 f.write(script_content)
-            
+
             # Make script executable
             os.chmod(script_path, 0o755)
-            
+
             output = CodeOutput()
             start_time = time.time()
-            
+
             try:
                 # Run the Perl script and capture output
                 process = await asyncio.create_subprocess_exec(
@@ -121,10 +122,11 @@ my $content = <>;
                     stdout=asyncio.subprocess.PIPE,
                     stderr=asyncio.subprocess.PIPE
                 )
-                
+
                 stdout, stderr = await process.communicate()
-                
-                if process.returncode == 0 or (stderr and b"Wide character" in stderr):  # Accept wide character warnings
+
+                if process.returncode == 0 or (
+                        stderr and b"Wide character" in stderr):  # Accept wide character warnings
                     modified_content = stdout.decode("utf-8")
                     if modified_content:
                         # Write content back to original file
@@ -137,11 +139,11 @@ my $content = <>;
                 else:
                     output.stderr = stderr.decode("utf-8")
                     output.result = process.returncode
-                
+
             except Exception as e:
                 output.stderr = f"Error executing Perl script: {str(e)}"
                 output.result = 1
             finally:
                 output.execution_time = time.time() - start_time
-            
+
             return output.format_output()
