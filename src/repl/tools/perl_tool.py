@@ -86,13 +86,15 @@ Example Perl patterns:
 use strict;
 use warnings;
 no warnings 'uninitialized';
-use utf8::all;
+use utf8;
+use open qw(:std :utf8);
+use Encode qw(decode encode);
 local $/;
-my $content = <>;
+my $content = decode('UTF-8', <>);
 
 {perl_script}
 
-print $content;
+print encode('UTF-8', $content);
 """)
             
             # Make script executable
@@ -105,10 +107,9 @@ print $content;
                 # Run the Perl script and capture output
                 process = await asyncio.create_subprocess_exec(
                     script_path,
-                    stdin=open(file_path, "r", encoding="utf-8"),
+                    stdin=open(file_path, "rb"),  # Open in binary mode
                     stdout=asyncio.subprocess.PIPE,
-                    stderr=asyncio.subprocess.PIPE,
-                    env={'PERL_UNICODE': 'AS'}  # Additional Unicode handling at process level
+                    stderr=asyncio.subprocess.PIPE
                 )
                 
                 stdout, stderr = await process.communicate()
