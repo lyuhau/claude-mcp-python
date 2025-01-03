@@ -26,6 +26,8 @@ class ReplServer(Server):
                 tool = tool_class()
                 self.tools[tool.name] = tool
 
+        self.initialize()
+
     @staticmethod
     def _get_tool_classes() -> list[Type[BaseTool]]:
         """Get all available tool classes"""
@@ -36,50 +38,38 @@ class ReplServer(Server):
             PerlTool,
         ]
 
-    async def initialize(self, options: InitializationOptions):
+    async def initialize(self):
         """Initialize the server and all tools"""
         # Initialize any tools that need it
         for tool in self.tools.values():
             if hasattr(tool, 'initialize'):
                 await tool.initialize()
-        return await super().initialize(options)
-
-    async def shutdown(self):
-        """Shutdown the server and all tools"""
-        # Shutdown any tools that need it
-        for tool in self.tools.values():
-            if hasattr(tool, 'shutdown'):
-                await tool.shutdown()
-        return await super().shutdown()
-
-
-server = ReplServer()
-
-
-@server.list_tools()
-async def handle_list_tools() -> list[types.Tool]:
-    """List available tools"""
-    return [tool.get_tool_definition() for tool in server.tools.values()]
-
-
-@server.call_tool()
-async def handle_call_tool(
-        name: str,
-        arguments: dict | None
-) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
-    """Handle tool execution requests"""
-    if not arguments:
-        raise ValueError("Missing arguments")
-
-    tool = server.tools.get(name)
-    if not tool:
-        raise ValueError(f"Unknown tool: {name}")
-
-    return await tool.execute(arguments)
 
 
 async def main():
-    """Run the server using stdin/stdout streams"""
+    """Create and run the server using stdin/stdout streams"""
+    server = ReplServer()
+
+    @server.list_tools()
+    async def handle_list_tools() -> list[types.Tool]:
+        """List available tools"""
+        return [tool.get_tool_definition() for tool in server.tools.values()]
+
+    @server.call_tool()
+    async def handle_call_tool(
+            name: str,
+            arguments: dict | None
+    ) -> list[types.TextContent | types.ImageContent | types.EmbeddedResource]:
+        """Handle tool execution requests"""
+        if not arguments:
+            raise ValueError("Missing arguments")
+
+        tool = server.tools.get(name)
+        if not tool:
+            raise ValueError(f"Unknown tool: {name}")
+
+        return await tool.execute(arguments)
+
     async with mcp.server.stdio.stdio_server() as (read_stream, write_stream):
         await server.run(
             read_stream,
